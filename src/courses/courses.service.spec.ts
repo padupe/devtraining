@@ -1,5 +1,6 @@
 import { CoursesService } from './courses.service'
 import { CreateCourseDTO } from './dtos/createCourseDTO'
+import { NotFoundException } from '@nestjs/common'
 
 describe('CoursesService', () => {
     let service: CoursesService
@@ -85,5 +86,29 @@ describe('CoursesService', () => {
         const courses = await service.findAll()
         expect(mockCourseRepository.find).toHaveBeenCalled()
         expect(expectOutputCourses).toStrictEqual(courses)
+    })
+
+    it('should gets a course', async () => {
+        const expectOutputTags = [{ id, name: 'nestjs', create_at: date }]
+        const expectOutputCourse = {
+            id,
+            name: 'Test',
+            description: 'Test description.',
+            created_at: date,
+            tags: expectOutputTags,
+        }
+
+        const mockCourseRepository = {
+            findOne: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+        }
+
+        // @ts-expect-error defined part of methods
+        service['courseRepository'] = mockCourseRepository
+
+        const course = await service.findOne(id)
+        expect(mockCourseRepository.findOne).toHaveBeenCalled()
+        expect(expectOutputCourse).toStrictEqual(course)
     })
 })
