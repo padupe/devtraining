@@ -2,6 +2,7 @@ import { Connection, Repository } from 'typeorm'
 import { CoursesService } from './courses.service'
 
 import { NotFoundException } from '@nestjs/common'
+import { CreateCourseDTO } from './dtos/createCourseDTO'
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>
 
@@ -22,6 +23,48 @@ describe('CoursesService', () => {
 
     it('should be defined', () => {
         expect(service).toBeDefined()
+    })
+
+    it('should be create a course', async () => {
+        const expectOutputTags = [{ id, name: 'nestjs', create_at: date }]
+        const expectOutputCourse = {
+            id,
+            name: 'Test',
+            description: 'Test description.',
+            created_at: date,
+            tags: expectOutputTags,
+        }
+
+        const mockCourseRepository = {
+            create: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+            save: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+        }
+
+        const mockTagRepository = {
+            create: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputTags)),
+            findOne: jest.fn().mockReturnValue,
+        }
+
+        // @ts-expect-error defined part of methods
+        service['courseRepository'] = mockCourseRepository
+        // @ts-expect-error defined part of methods
+        service['tagRepository'] = mockTagRepository
+
+        const createCourseDTO: CreateCourseDTO = {
+            name: expectOutputCourse.name,
+            description: expectOutputCourse.description,
+            tags: [expectOutputTags[0].name],
+        }
+
+        const newCourse = await service.create(createCourseDTO)
+        expect(mockCourseRepository.save).toHaveBeenCalled()
+        expect(expectOutputCourse).toStrictEqual(newCourse)
     })
 
     // describe('findOne', () => {
