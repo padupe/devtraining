@@ -1,6 +1,6 @@
 import { CoursesService } from './courses.service'
 import { CreateCourseDTO } from './dtos/createCourseDTO'
-import { NotFoundException } from '@nestjs/common'
+import { UpdateCourseDTO } from './dtos/updateCourseDTO'
 
 describe('CoursesService', () => {
     let service: CoursesService
@@ -40,7 +40,7 @@ describe('CoursesService', () => {
             create: jest
                 .fn()
                 .mockReturnValue(Promise.resolve(expectOutputTags)),
-            findOne: jest.fn().mockReturnValue,
+            findOne: jest.fn(),
         }
 
         // @ts-expect-error defined part of methods
@@ -109,6 +109,78 @@ describe('CoursesService', () => {
 
         const course = await service.findOne(id)
         expect(mockCourseRepository.findOne).toHaveBeenCalled()
+        expect(expectOutputCourse).toStrictEqual(course)
+    })
+
+    it('should updates a course', async () => {
+        const expectOutputTags = [{ id, name: 'nestjs', create_at: date }]
+        const expectOutputCourse = {
+            id,
+            name: 'Test',
+            description: 'Test description.',
+            created_at: date,
+            tags: expectOutputTags,
+        }
+
+        const mockCourseRepository = {
+            preload: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+            save: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+            update: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+        }
+
+        const mockTagRepository = {
+            create: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputTags)),
+            findOne: jest.fn(),
+        }
+
+        // @ts-expect-error defined part of methods
+        service['courseRepository'] = mockCourseRepository
+        // @ts-expect-error defined part of methods
+        service['tagRepository'] = mockTagRepository
+
+        const updateCourseDTO: UpdateCourseDTO = {
+            name: expectOutputCourse.name,
+            description: expectOutputCourse.description,
+            tags: [expectOutputTags[0].name],
+        }
+
+        const course = await service.update(id, updateCourseDTO)
+        expect(mockCourseRepository.save).toHaveBeenCalled()
+        expect(expectOutputCourse).toStrictEqual(course)
+    })
+
+    it('should deletes a course', async () => {
+        const expectOutputTags = [{ id, name: 'nestjs', create_at: date }]
+        const expectOutputCourse = {
+            id,
+            name: 'Test',
+            description: 'Test description.',
+            created_at: date,
+            tags: expectOutputTags,
+        }
+
+        const mockCourseRepository = {
+            findOne: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+            remove: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourse)),
+        }
+
+        // @ts-expect-error defined part of methods
+        service['courseRepository'] = mockCourseRepository
+
+        const course = await service.remove(id)
+        expect(mockCourseRepository.remove).toHaveBeenCalled()
         expect(expectOutputCourse).toStrictEqual(course)
     })
 })
