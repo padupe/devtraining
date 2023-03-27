@@ -1,14 +1,5 @@
-import { Connection, Repository } from 'typeorm'
 import { CoursesService } from './courses.service'
-
-import { NotFoundException } from '@nestjs/common'
 import { CreateCourseDTO } from './dtos/createCourseDTO'
-
-type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>
-
-const createMockRepository = <T = any>(): MockRepository<T> => ({
-    findOne: jest.fn(),
-})
 
 describe('CoursesService', () => {
     let service: CoursesService
@@ -67,30 +58,32 @@ describe('CoursesService', () => {
         expect(expectOutputCourse).toStrictEqual(newCourse)
     })
 
-    // describe('findOne', () => {
-    //     describe('buscar curso pelo ID', () => {
-    //         it('deve retornar o objeto Course', async () => {
-    //             const courseId = '1'
-    //             const expectedCourse = {}
+    it('should be list courses', async () => {
+        const expectOutputTags = [{ id, name: 'nestjs', create_at: date }]
+        const expectOutputCourses = [
+            {
+                id,
+                name: 'Test',
+                description: 'Test description.',
+                created_at: date,
+                tags: expectOutputTags,
+            },
+        ]
 
-    //             courseRepository.findOne.mockReturnValue(expectedCourse)
-    //             const course = await service.findOne(courseId)
-    //             expect(course).toEqual(expectedCourse)
-    //         })
+        const mockCourseRepository = {
+            findAll: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourses)),
+            find: jest
+                .fn()
+                .mockReturnValue(Promise.resolve(expectOutputCourses)),
+        }
 
-    //         it('deve retornar uma NotFoundException', async () => {
-    //             const courseId = '1'
-    //             courseRepository.findOne.mockReturnValue(undefined)
+        // @ts-expect-error defined part of methods
+        service['courseRepository'] = mockCourseRepository
 
-    //             try {
-    //                 await service.findOne(courseId)
-    //             } catch (error) {
-    //                 expect(error).toBeInstanceOf(NotFoundException)
-    //                 expect(error.message).toEqual(
-    //                     `Course ID ${courseId} not found!`
-    //                 )
-    //             }
-    //         })
-    //     })
-    // })
+        const courses = await service.findAll()
+        expect(mockCourseRepository.find).toHaveBeenCalled()
+        expect(expectOutputCourses).toStrictEqual(courses)
+    })
 })
