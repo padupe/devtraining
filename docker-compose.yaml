@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  app:
+    # Como o Dockerfile está na raiz informo apenas . (ponto)
+    build: .
+    entrypoint: .docker/entrypoint.sh
+    container_name: cursonestjs-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/home/node/app
+    depends_on:
+      - db
+
+  db:
+    build: .docker/postgres
+    container_name: cursonestjs-db
+    restart: always
+    # tty é a propriedade que define se teremos acesso ao terminal
+    tty: true
+    ports:
+      - "5432:5432"
+    volumes:
+      # Cria-se uma pasta com os dados do DB localmente que é espelhada no container,
+      # dessa maneira não se perdem dados
+      - .docker/dbdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=cursonestjs
+  
+  dbtest:
+    build: .docker/postgres
+    container_name: cursonestjs-dbtest
+    restart: always
+    tty: true
+    ports:
+      - "5433:5432"
+    volumes:
+      - .docker/dbdatatest:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=testdb
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: cursonestjs-pgadmin
+    tty: true
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
